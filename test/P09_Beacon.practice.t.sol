@@ -56,17 +56,17 @@ contract BeaconPracticeTest {
 
     // TODO(student): Build initializer calldata for initialize(INITIAL_VALUE, address(this)).
     function _buildInitData() internal view returns (bytes memory) {
-        return abi.encodeCall(BeaconBoxV1.initialize, (0, address(this)));
+        return abi.encodeCall(BeaconBoxV1.initialize, (INITIAL_VALUE, address(this)));
     }
 
     // TODO(student): Each proxy should be initialized exactly once with INITIAL_VALUE.
     function _assertInitialized(BeaconBoxV1 b1, BeaconBoxV1 b2) internal view {
         require(
-            b1.value() == type(uint256).max,
+            b1.value() == INITIAL_VALUE,
             "TODO: assert proxy A initialized state"
         );
         require(
-            b2.value() == type(uint256).max,
+            b2.value() == INITIAL_VALUE,
             "TODO: assert proxy B initialized state"
         );
     }
@@ -80,16 +80,18 @@ contract BeaconPracticeTest {
             abi.encodeCall(BeaconBoxV1.initialize, (999, address(this)))
         );
 
-        require(ok1 == true, "TODO: proxy A reinitialize must fail");
-        require(ok2 == true, "TODO: proxy B reinitialize must fail");
+        require(ok1 != true, "TODO: proxy A reinitialize must fail");
+        require(ok2 != true, "TODO: proxy B reinitialize must fail");
     }
 
     // TODO(student): Owner must be able to set independent values on both proxies.
     function _setIndependentStateAsOwner(
         BeaconBoxV1 b1,
         BeaconBoxV1 b2
-    ) internal view {
+    ) internal  {
+        b1.setValue(VALUE_A);
         require(b1.value() == VALUE_A, "TODO: owner sets proxy A to VALUE_A");
+        b2.setValue(VALUE_B);
         require(b2.value() == VALUE_B, "TODO: owner sets proxy B to VALUE_B");
     }
 
@@ -102,12 +104,13 @@ contract BeaconPracticeTest {
         (bool ok, ) = address(beacon).call(
             abi.encodeWithSelector(beacon.upgradeTo.selector, address(implV2))
         );
-        require(ok == true, "TODO: unauthorized beacon upgrade must fail");
+        require(ok != true, "TODO: unauthorized beacon upgrade must fail");
     }
 
     // TODO(student): owner upgrades the beacon to V2.
-    function _upgradeAsOwner(UpgradeableBeacon, BeaconBoxV2) internal {
-        revert("TODO: owner beacon upgrade path");
+    function _upgradeAsOwner(UpgradeableBeacon beacon, BeaconBoxV2 v2) internal {
+        beacon.upgradeTo(address(v2));
+        //revert("TODO: owner beacon upgrade path");
     }
 
     // TODO(student): Both proxies must now report version() == 2 while keeping VALUE_A / VALUE_B.
@@ -115,17 +118,19 @@ contract BeaconPracticeTest {
         BeaconBoxV2 b1v2,
         BeaconBoxV2 b2v2
     ) internal view {
-        require(b1v2.version() == 99, "TODO: proxy A version should be 2");
-        require(b2v2.version() == 99, "TODO: proxy B version should be 2");
-        require(b1v2.value() == 999, "TODO: proxy A state must be preserved");
-        require(b2v2.value() == 999, "TODO: proxy B state must be preserved");
+        require(b1v2.version() == 2, "TODO: proxy A version should be 2");
+        require(b2v2.version() == 2, "TODO: proxy B version should be 2");
+        require(b1v2.value() == VALUE_A, "TODO: proxy A state must be preserved");
+        require(b2v2.value() == VALUE_B, "TODO: proxy B state must be preserved");
     }
 
     // TODO(student): increment() is newly available in V2 and should update each proxy independently.
     function _assertIncrementPaths(
         BeaconBoxV2 b1v2,
         BeaconBoxV2 b2v2
-    ) internal view {
+    ) internal  {
+        b1v2.increment();
+        b2v2.increment();
         require(b1v2.value() == VALUE_A + 1, "TODO: proxy A increment path");
         require(b2v2.value() == VALUE_B + 1, "TODO: proxy B increment path");
     }

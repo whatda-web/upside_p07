@@ -43,12 +43,12 @@ contract UUPSPracticeTest {
     // TODO(student): Build initializer calldata for initialize(INITIAL_VALUE, address(this)).
     // The default value is intentionally wrong so the test compiles and fails at a visible TODO point.
     function _buildInitData() internal view returns (bytes memory) {
-        return abi.encodeCall(UUPSBoxV1.initialize, (0, address(this)));
+        return abi.encodeCall(UUPSBoxV1.initialize, (INITIAL_VALUE, address(this)));
     }
 
     // TODO(student): Verify that initialization succeeded and value == INITIAL_VALUE.
     function _assertInitialized(UUPSBoxV1 boxV1) internal view {
-        require(boxV1.value() == type(uint256).max, "TODO: assert initialized state");
+        require(boxV1.value() == INITIAL_VALUE, "TODO: assert initialized state");
     }
 
     // TODO(student): Re-calling initialize on the proxy must fail.
@@ -63,8 +63,9 @@ contract UUPSPracticeTest {
     function _setValueAsOwner(UUPSBoxV1 boxV1) internal {
         VM.prank(ATTACKER, ATTACKER);
         (bool ok,) = address(boxV1).call(abi.encodeCall(UUPSBoxV1.setValue, (UPDATED_VALUE)));
-        require(ok == true, "TODO: attacker setValue must fail");
-
+        require(ok == false, "TODO: attacker setValue must fail");
+        
+        boxV1.setValue(UPDATED_VALUE);
         require(boxV1.value() == UPDATED_VALUE, "TODO: owner setValue path");
     }
 
@@ -82,18 +83,19 @@ contract UUPSPracticeTest {
     }
 
     // TODO(student): owner upgrades proxy to V2 through upgradeToAndCall.
-    function _upgradeAsOwner(UUPSBoxV1, UUPSBoxV2) internal {
-        revert("TODO: owner upgrade path");
+    function _upgradeAsOwner(UUPSBoxV1 boxV1, UUPSBoxV2 implV2) internal {
+        boxV1.upgradeToAndCall(address(implV2), bytes(""));
     }
 
     // TODO(student): After upgrade, version() == 2 and value is still UPDATED_VALUE.
     function _assertUpgradeState(UUPSBoxV2 boxV2) internal view {
-        require(boxV2.version() == 99, "TODO: version should be 2");
-        require(boxV2.value() == 999, "TODO: state must be preserved");
+        require(boxV2.version() == 2, "TODO: version should be 2");
+        require(boxV2.value() == UPDATED_VALUE, "TODO: state must be preserved");
     }
 
     // TODO(student): increment() should be newly available in V2 and change value to UPDATED_VALUE + 1.
     function _assertIncrement(UUPSBoxV2 boxV2) internal {
+        boxV2.increment();
         require(boxV2.value() == UPDATED_VALUE + 1, "TODO: increment path");
     }
 }
