@@ -1,6 +1,3 @@
-test/P09_Beacon.answer.t.sol
-test/P09_Diamond.answer.t.sol
-test/P09_UUPS.answer.t.sol
 out/
 cache/
 broadcast/
